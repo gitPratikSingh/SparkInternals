@@ -1,3 +1,5 @@
+// *******************************************************************
+
 val partitioner = new HashPartitioner(partitions = 4)
 
 val a = spark.sparkContext.makeRDD(Seq(
@@ -27,33 +29,26 @@ a.join(b, partitioner)
     println()
 })
 
+// *******************************************************************
 
-// notes
+
+// basic RDD Join
+
+def joinScoresWithAddress1( scoreRDD : RDD[(Long, Double)],
+addressRDD : RDD[(Long, String )]) : RDD[(Long, (Double, String))]= {
+val joinedRDD = scoreRDD.join(addressRDD)
+joinedRDD.reduceByKey( (x, y) => if(x._1 > y._1) x else y )
+}
+
 /*
-In order to join data, Spark needs the data that is to be joined (i.e. the data based on
-each key) to live on the same partition. The default implementation of join in Spark is
-a shuffled hash join. The shuffled hash join ensures that data on each partition will
-contain the same keys by partitioning the second dataset with the same default partitioner
-as the first, so that the keys with the same hash value from both datasets are in
-the same partition. While this approach always works, it can be more expensive than
-necessary because it requires a shuffle. The shuffle can be avoided if:
-
-1. Both RDDs have a known partitioner.
-2. One of the datasets is small enough to fit in memory, in which case we can do a
-broadcast hash join
-
+However, this is probably not as fast as first reducing the score data, so that the first
+dataset contains only one row for each Panda with her best score, and then joining
+that data with the address data.
 */
 
-
-def joinScoresWithAddress( scoreRDD : RDD[(Long, Double)],
+// Pre-filter before join
+def joinScoresWithAddress2( scoreRDD : RDD[(Long, Double)],
 addressRDD : RDD[(Long, String )]) : RDD[(Long, (Double, String))]= {
-//if addressRDD has a known partitioner we should use that,
-//otherwise it has a default hash parttioner, which we can reconstrut by getting the umber of
-// partitions.
-val addressDataPartitioner = addressRDD.partitioner match {
-case (Some(p)) => p
-case (None) => new HashPartitioner(addressRDD.partitions.length)
-}
-val bestScoreData = scoreRDD.reduceByKey(addressDataPartitioner, (x, y) => if(x > y) x else y)
+val bestScoreData = scoreRDD.reduceByKey((x, y) => if(x > y) x else y)
 bestScoreData.join(addressRDD)
 }
