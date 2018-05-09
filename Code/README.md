@@ -40,7 +40,40 @@ with the same keys lives in the same partitions.
  
  - Partitioner Join: Regardless of if the partitioners are the same, if one (or both) of the RDDs have a known partitioner only a narrow dependency is created. 
  
- ![Alt text](https://github.com/gitPratikSingh/SparkInternals/blob/master/PartitionerJoin.PNG?raw=true "ShuffleJoin")
+ ![Alt text](https://github.com/gitPratikSingh/SparkInternals/blob/master/PartitionerJoin.PNG?raw=true "Partitioner")
  
 
 As with most key-value operations, the cost of the join increases with the number of keys and the distance the records have to travel in order to get to their correct partition.
+
+
+# Choosing a Join type:
+The best scenario for a standard join is when both RDDs contain the same set of distinct keys. With duplicate keys, the size of the data may expand dramatically causing performance issues, and if one key is not present in both RDDs you will loose that row of data. Here are a few guidelines:
+
+ - When both RDDs have duplicate keys, the join can cause the size of the data to expand dramatically. It may be better to perform a distinct or combineByKey operation to reduce the key space or to use cogroup to handle duplicate keys instead of producing the full cross product. By using smart partitioning during the combine step, it is possible to prevent a second shuffle in the join.
+
+ - If keys are not present in both RDDs you risk losing your data unexpectedly. It can be safer to use an outer join, so that you are guaranteed to keep all the data in either the left or the right RDD, then filter the data after the join.
+
+ - If one RDD has some easy-to-define subset of the keys, in the other you may be better off filtering or reducing before the join to avoid a big shuffle of data, which you will ultimately throw away anyway.
+ 
+# Join Execution Plan
+- In order to join data, Spark needs the data that is to be joined (i.e. the data based on each key) to live on the same partition. The default implementation of join in Spark is a shuffled hash join. The shuffled hash join ensures that data on each partition will contain the same keys by partitioning the second dataset with the same default partitioner as the first, so that the keys with the same hash value from both datasets are in the same partition.
+  #### 
+  While this approach always works, it can be more expensive than necessary because it requires a shuffle.
+  The shuffle can be avoided if:
+  	- Both RDDs have a known partitioner.
+	- One of the datasets is small enough to fit in memory, in which case we can do a broadcast hash join
+
+
+# Speed up techniques: 
+  - Speeding Up Joins by Assigning a Known Partitioner
+ If you have to do an operation before the join that requires a shuffle, such as aggrega teByKey or reduceByKey, you can prevent the 
+ shuffle by adding a hash partitioner with the same number of partitions as an explicit argument to the first operation and persisting
+ the RDD before the join. You could make the example in the previous section even faster, by using the partitioner for the address data
+ as an argument for the reduceByKey step.
+ 
+ ![Alt text](https://github.com/gitPratikSingh/SparkInternals/blob/master/Partitioner.PNG?raw=true "Partitioner")
+ 
+  - Speeding Up Joins Using a Broadcast Hash Join
+ A broadcast hash join pushes one of the RDDs (the smaller one) to each of the worker nodes. Then it does a map-side combine with each partition of the larger RDD. If one of your RDDs can fit in memory or can be made to fit in memory it is always beneficial to do a broadcast hash join, since it doesn’t require a shuffle.
+
+![Alt text](https://github.com/gitPratikSingh/SparkInternals/blob/master/Partitioner.PNG?raw=true "Partitioner")
