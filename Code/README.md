@@ -25,3 +25,22 @@
  - This additional schema information is used to provide a more efficient storage layer and in the optimizer. Beyond schema 
    information, the operations performed on DataFrames are such that the optimizer can inspect the logical meaning rather than 
    arbitrary functions.
+
+# Core Spark Joins
+  Joins in general are expensive since they require that corresponding keys from each RDD are located at the same partition so that they can be combined locally. 
+ 
+ - ShuffleJoin: If the RDDs do not have known partitioners, they will need to be shuffled so that both RDDs share a partitioner and data
+with the same keys lives in the same partitions.
+
+![Alt text](https://github.com/gitPratikSingh/SparkInternals/blob/master/ShuffleJoin.PNG?raw=true "ShuffleJoin")
+
+ - Co-located Join: If they have the same partitioner, the data may be colocated, so as to avoid network transfer. 
+ 
+ ![Alt text](https://github.com/gitPratikSingh/SparkInternals/blob/master/ColocatedJoine.PNG?raw=true "ShuffleJoin")
+ 
+ - Partitioner Join: Regardless of if the partitioners are the same, if one (or both) of the RDDs have a known partitioner only a narrow dependency is created. 
+ 
+ ![Alt text](https://github.com/gitPratikSingh/SparkInternals/blob/master/PartitionerJoin.PNG?raw=true "ShuffleJoin")
+ 
+
+As with most key-value operations, the cost of the join increases with the number of keys and the distance the records have to travel in order to get to their correct partition.
