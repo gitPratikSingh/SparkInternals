@@ -76,4 +76,4 @@ The best scenario for a standard join is when both RDDs contain the same set of 
   - Speeding Up Joins Using a Broadcast Hash Join
  A broadcast hash join pushes one of the RDDs (the smaller one) to each of the worker nodes. Then it does a map-side combine with each partition of the larger RDD. If one of your RDDs can fit in memory or can be made to fit in memory it is always beneficial to do a broadcast hash join, since it doesn’t require a shuffle.
 
-![Alt text](https://github.com/gitPratikSingh/SparkInternals/blob/master/Partitioner.PNG?raw=true "Partitioner")
+![Alt text](https://github.com/gitPratikSingh/SparkInternals/blob/master/Broadcast.PNG?raw=true "braodcast")
