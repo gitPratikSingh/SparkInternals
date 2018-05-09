@@ -9,15 +9,16 @@
    collecting an aggregate to the driver)
    
 # The RDD Interface
- - Spark uses five main properties to represent an RDD internally.
-   • partitions(): Returns an array of the partition objects that make up the parts of the distributed dataset
-   • iterator(p, parentIters) Computes the elements of partition p given iterators for each of its parent partitions. 
+  Spark uses five main properties to represent an RDD internally.
+ 
+   - partitions(): Returns an array of the partition objects that make up the parts of the distributed dataset
+   - iterator(p, parentIters) Computes the elements of partition p given iterators for each of its parent partitions. 
      This function is called in order to compute each of the partitions in this RDD.
-   • dependencies() Returns a sequence of dependency objects. The dependencies let the scheduler know how this RDD 
+   - dependencies() Returns a sequence of dependency objects. The dependencies let the scheduler know how this RDD 
 	 depends on other RDDs
-   • partitioner() Returns a Scala option type that contains a partitioner object if the RDD has a function between 
+   - partitioner() Returns a Scala option type that contains a partitioner object if the RDD has a function between 
      datapoint and partitioner associated with it, such as a hashPartitioner
-   • preferredLocations(p) Returns information about the data locality of a partition, p.
+   - preferredLocations(p) Returns information about the data locality of a partition, p.
    
 # DataFrames, Datasets & Spark SQL
  - Like RDDs, DataFrames and Datasets represent distributed collections, with additional schema information not found in RDDs
