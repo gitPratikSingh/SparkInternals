@@ -52,3 +52,17 @@ addressRDD : RDD[(Long, String )]) : RDD[(Long, (Double, String))]= {
 val bestScoreData = scoreRDD.reduceByKey((x, y) => if(x > y) x else y)
 bestScoreData.join(addressRDD)
 }
+
+// choosing a known partitioner
+def joinScoresWithAddress3( scoreRDD : RDD[(Long, Double)],
+addressRDD : RDD[(Long, String )]) : RDD[(Long, (Double, String))]= {
+//if addressRDD has a known partitioner we should use that,
+//otherwise it has a default hash parttioner, which we can reconstrut by getting the umber of
+// partitions.
+val addressDataPartitioner = addressRDD.partitioner match {
+case (Some(p)) => p
+case (None) => new HashPartitioner(addressRDD.partitions.length)
+}
+val bestScoreData = scoreRDD.reduceByKey(addressDataPartitioner, (x, y) => if(x > y) x else y)
+bestScoreData.join(addressRDD)
+}
